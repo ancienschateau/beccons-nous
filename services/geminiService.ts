@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Coordinates } from '../types';
 
@@ -63,7 +62,7 @@ export const generateWelcomeMessage = async (city: string, name: string): Promis
       model: 'gemini-2.5-flash',
       contents: `Write a very short, witty welcome message in French for an alumni named ${name} who has just registered from ${city}. Use a tone that mixes French elegance with a slight Roman/Italian touch (as they are from Lycée Chateaubriand Rome). Keep it under 15 words.`,
     });
-    return response.text.trim();
+    return (response.text || "").trim();
   } catch (e) {
     return "Bienvenue à bord !";
   }
