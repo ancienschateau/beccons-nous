@@ -1,15 +1,18 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { Coordinates } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Fallback a stringa vuota. 
+// Gemini viene usato ORA SOLO per il messaggio di benvenuto.
+const apiKey = process.env.API_KEY || ""; 
+const ai = new GoogleGenAI({ apiKey });
 
-// Semplice cache in memoria per evitare di chiedere 50 volte dov'è "Roma"
+// Cache in memoria
 const cityCache: Record<string, Coordinates> = {};
 
 /**
- * Uses Gemini to find the coordinates of a city.
- * We use Gemini instead of a standard geocoder to demonstrate API usage 
- * and handle loose inputs (e.g., "Roma, zona centro" or "Paris 14eme").
+ * Uses OpenStreetMap (Nominatim) to find coordinates.
+ * FREE service, no API Key required.
+ * LIMIT: Max 1 request per second (handled in App.tsx loop).
  */
 export const getCityCoordinates = async (city: string): Promise<Coordinates | null> => {
   const normalizedCity = city.toLowerCase().trim();
@@ -20,43 +23,46 @@ export const getCityCoordinates = async (city: string): Promise<Coordinates | nu
   }
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `Identify the latitude and longitude for the city center of: "${city}". Return ONLY a JSON object.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            lat: { type: Type.NUMBER },
-            lng: { type: Type.NUMBER },
-            found: { type: Type.BOOLEAN }
-          },
-          required: ["lat", "lng", "found"]
+    // Usiamo Nominatim di OpenStreetMap
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`;
+    
+    const response = await fetch(url, {
+        method: 'GET',
+        // Headers opzionali ma consigliati per good practice verso OSM
+        headers: {
+            'Accept': 'application/json'
         }
-      }
     });
 
-    const data = JSON.parse(response.text || '{}');
-    
-    if (data.found && typeof data.lat === 'number' && typeof data.lng === 'number') {
-      const result = { lat: data.lat, lng: data.lng };
+    if (!response.ok) return null;
+
+    const data = await response.json();
+
+    if (data && data.length > 0) {
+      const result = { 
+        lat: parseFloat(data[0].lat), 
+        lng: parseFloat(data[0].lon) 
+      };
       // 2. Salva in cache
       cityCache[normalizedCity] = result;
       return result;
     }
+    
     return null;
 
   } catch (error) {
-    console.error("Gemini Geocoding Error:", error);
+    console.error("Geocoding Error:", error);
     return null;
   }
 };
 
 /**
- * Generates a fun welcome message based on the city.
+ * Generates a fun welcome message based on the city using Gemini.
+ * This is low volume (only on new entry), so it won't hit quota limits easily.
  */
 export const generateWelcomeMessage = async (city: string, name: string): Promise<string> => {
+  if (!apiKey) return "Bienvenue à bord !";
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',

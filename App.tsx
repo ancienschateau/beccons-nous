@@ -31,6 +31,10 @@ const App: React.FC = () => {
     // Processiamo uno alla volta per aggiornare la UI progressivamente
     for (const person of missingCoords) {
       try {
+        // IMPORTANT: OpenStreetMap (Nominatim) richiede max 1 richiesta al secondo.
+        // Aggiungiamo un delay artificiale per evitare il ban IP o errori 429.
+        await new Promise(resolve => setTimeout(resolve, 1100));
+
         const coords = await getCityCoordinates(person.city);
         if (coords) {
           // Aggiungiamo il Jitter per la privacy anche qui
