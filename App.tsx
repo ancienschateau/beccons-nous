@@ -93,18 +93,7 @@ const App: React.FC = () => {
     <div className="relative w-full h-screen overflow-hidden flex flex-col bg-slate-50">
       
       {/* Navbar / Header */}
-      <header className="absolute top-0 left-0 right-0 z-20 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-200 px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center space-x-3">
-           <img 
-             src="https://i.ibb.co/YTXNGrGc/Logo-ADALC-HDDEF-1000x1000.png" 
-             alt="Logo ADALC" 
-             className="h-10 w-10 object-contain"
-           />
-           <div>
-             <h1 className="text-xl font-bold text-slate-900 font-serif leading-none">Beccons-Nous !</h1>
-             <p className="text-xs text-slate-500 font-medium">Anciens élèves du Lycée Chateaubriand</p>
-           </div>
-        </div>
+      <header className="absolute top-0 left-0 right-0 z-20 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-200 px-4 py-3 flex justify-end items-center">
         
         <div className="flex items-center space-x-3">
           <div className="hidden md:flex items-center text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
